@@ -1,0 +1,56 @@
+PUT http://localhost:9200/book_index
+Content-Type: application/json
+
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "vi_mixed_analyzer": {
+          "tokenizer": "icu_tokenizer", 
+          "filter": [
+            "lowercase",
+            "icu_folding"
+          ]
+        }
+      }
+    },
+    "index": {
+      "similarity": {
+        "lm_scoring": {
+          "type": "LMDirichlet"
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "name": {
+        "type": "text",
+        "analyzer": "vi_mixed_analyzer"
+      },
+      "abstract": {
+        "type": "text",
+        "analyzer": "vi_mixed_analyzer",
+        "similarity": "lm_scoring"
+      }
+    }
+  }
+}
+### Cập nhật Mapping để hỗ trợ gợi ý thông minh
+PUT http://localhost:9200/book_index/_mapping
+Content-Type: application/json
+
+{
+  "properties": {
+    "name": {
+      "type": "text",
+      "analyzer": "vi_mixed_analyzer",
+      "fields": {
+        "suggest": {
+          "type": "text",
+          "analyzer": "vi_mixed_analyzer" 
+        }
+      }
+    }
+  }
+}
