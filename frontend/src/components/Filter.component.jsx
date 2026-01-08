@@ -6,38 +6,71 @@ const Filter = ({ onFilterChange }) => {
     const [publishers, setPublishers] = useState([]);
     const [selectedPublisher, setSelectedPublisher] = useState('');
     const [minPages, setMinPages] = useState('');
-    const [maxPrice, setMaxPrice] = useState(500000);
+
+    // Price Range State
+    const MIN_GAP = 10000; // Minimum difference between min and max
+    const MAX_PRICE_LIMIT = 500000;
+    const [minPrice, setMinPrice] = useState(0);
+    const [maxPrice, setMaxPrice] = useState(MAX_PRICE_LIMIT);
 
     useEffect(() => {
-        // 1. Gọi API để liệt kê ra 'nhà xuất bản'
         const fetchPublishers = async () => {
             try {
-                // Giả sử API trả về danh sách publisher
-                // Nếu chưa có API thực, dùng mock data ở đây để test UI
                 const res = await axios.get('http://localhost:5000/api/publishers');
                 setPublishers(res.data);
             } catch (error) {
                 console.error("Failed to fetch publishers:", error);
-                // Fallback data nếu gọi API lỗi
                 setPublishers(["Nhà Xuất Bản Trẻ", "NXB Kim Đồng", "NXB Văn Học", "NXB Giáo Dục", "NXB Lao Động"]);
             }
         };
-
         fetchPublishers();
     }, []);
 
-    const handleFilterChange = (updates) => {
-        const newFilters = {
-            publisher: updates.publisher !== undefined ? updates.publisher : selectedPublisher,
-            minPages: updates.minPages !== undefined ? updates.minPages : minPages,
-            maxPrice: updates.maxPrice !== undefined ? updates.maxPrice : maxPrice,
-        };
-
-        // Gửi thông tin filter lên component cha (nếu có prop)
+    const notifyChange = (updates) => {
         if (onFilterChange) {
-            onFilterChange(newFilters);
+            onFilterChange({
+                publisher: selectedPublisher,
+                minPages: minPages,
+                minPrice: minPrice,
+                maxPrice: maxPrice,
+                ...updates
+            });
         }
     };
+
+    const handlePublisherChange = (e) => {
+        const val = e.target.value;
+        setSelectedPublisher(val);
+        notifyChange({ publisher: val });
+    };
+
+    const handleMinPagesChange = (e) => {
+        const val = e.target.value;
+        setMinPages(val);
+        notifyChange({ minPages: val });
+    };
+
+    const handleMinPriceChange = (e) => {
+        let val = parseInt(e.target.value);
+        if (val > maxPrice - MIN_GAP) {
+            val = maxPrice - MIN_GAP;
+        }
+        setMinPrice(val);
+        notifyChange({ minPrice: val });
+    };
+
+    const handleMaxPriceChange = (e) => {
+        let val = parseInt(e.target.value);
+        if (val < minPrice + MIN_GAP) {
+            val = minPrice + MIN_GAP;
+        }
+        setMaxPrice(val);
+        notifyChange({ maxPrice: val });
+    };
+
+    // Calculate progress bar styling
+    const progressLeft = (minPrice / MAX_PRICE_LIMIT) * 100;
+    const progressRight = 100 - (maxPrice / MAX_PRICE_LIMIT) * 100;
 
     return (
         <div className="filter-container">
@@ -46,19 +79,10 @@ const Filter = ({ onFilterChange }) => {
             {/* 1. Nhà xuất bản */}
             <div className="filter-group">
                 <label htmlFor="publisher-select">Nhà xuất bản</label>
-                <select
-                    id="publisher-select"
-                    value={selectedPublisher}
-                    onChange={(e) => {
-                        setSelectedPublisher(e.target.value);
-                        handleFilterChange({ publisher: e.target.value });
-                    }}
-                >
+                <select id="publisher-select" value={selectedPublisher} onChange={handlePublisherChange}>
                     <option value="">-- Tất cả --</option>
                     {publishers.map((pub, index) => (
-                        <option key={index} value={pub}>
-                            {pub}
-                        </option>
+                        <option key={index} value={pub}>{pub}</option>
                     ))}
                 </select>
             </div>
@@ -72,30 +96,44 @@ const Filter = ({ onFilterChange }) => {
                     placeholder="VD: 100"
                     value={minPages}
                     min="0"
-                    onChange={(e) => {
-                        setMinPages(e.target.value);
-                        handleFilterChange({ minPages: e.target.value });
-                    }}
+                    onChange={handleMinPagesChange}
                 />
             </div>
 
-            {/* 3. Khoảng giá (0đ - 500,000đ) */}
+            {/* 3. Khoảng giá (Double Slider) */}
             <div className="filter-group">
-                <label>Giá tối đa: {Number(maxPrice).toLocaleString('vi-VN')} đ</label>
-                <input
-                    type="range"
-                    min="0"
-                    max="500000"
-                    step="1000"
-                    value={maxPrice}
-                    onChange={(e) => {
-                        setMaxPrice(e.target.value);
-                        handleFilterChange({ maxPrice: e.target.value });
-                    }}
-                />
-                <div className="price-range">
-                    <span className="price-label">0đ</span>
-                    <span className="price-label">500.000đ</span>
+                <label>Khoảng giá (VNĐ)</label>
+                <div className="range-slider">
+                    {/* The visual colored bar */}
+                    <div
+                        className="range-progress"
+                        style={{ left: `${progressLeft}%`, right: `${progressRight}%` }}
+                    ></div>
+
+                    {/* The inputs */}
+                    <div className="range-input">
+                        <input
+                            type="range"
+                            min="0"
+                            max={MAX_PRICE_LIMIT}
+                            step="1000"
+                            value={minPrice}
+                            onChange={handleMinPriceChange}
+                        />
+                        <input
+                            type="range"
+                            min="0"
+                            max={MAX_PRICE_LIMIT}
+                            step="1000"
+                            value={maxPrice}
+                            onChange={handleMaxPriceChange}
+                        />
+                    </div>
+                </div>
+
+                <div className="price-values">
+                    <span>{minPrice.toLocaleString('vi-VN')}</span>
+                    <span>{maxPrice.toLocaleString('vi-VN')}</span>
                 </div>
             </div>
         </div>

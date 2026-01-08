@@ -37,7 +37,7 @@ function Home() {
 
     return (
         <div className="Home">
-            <h1>📚 Book Search Engine</h1>
+            <h1 style={{ paddingLeft: '500px' }} >📚 Book Search Engine</h1>
             <div className="search-container">
                 <form onSubmit={handleSearch}>
                     <input
@@ -63,7 +63,7 @@ function Home() {
             </div>
 
             {/* Phần hiển thị Results giữ nguyên như cũ */}
-            <div className="results">
+            <div style={{ width: '60%', paddingLeft: '210px' }} className="results">
                 {results.map((book) => (
                     <div key={book.id} className="book-card">
                         <h3>{book.name}</h3>
@@ -71,7 +71,7 @@ function Home() {
                     </div>
                 ))}
             </div>
-        </div>
+        </div> 
     );
 }
 

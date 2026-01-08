@@ -12,38 +12,37 @@ const BookStore = () => {
     const [filters, setFilters] = useState({});
     const [selectedBook, setSelectedBook] = useState(null);
 
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 12;
+
     // Fetch initial books or handle search
     const fetchBooks = async (searchTerm = '') => {
         setLoading(true);
         try {
-            // Sử dụng API search hiện tại
-            const payload = {
-                query: searchTerm,
-                ...filters // Gửi kèm filters nếu backend hỗ trợ, hoặc dùng để filter client-side
-            };
-
-            // Nếu không có search term, có thể gọi một API 'getAll' hoặc search '*' nếu ES hỗ trợ
-            // Ở đây ta giả định search với query rỗng hoặc '*' sẽ trả về tất cả/random sách
             const endpoint = 'http://localhost:5000/api/search';
-            const termToSearch = searchTerm || 'sách'; // Mặc định tìm 'sách' nếu rỗng để có dữ liệu demo
+            const termToSearch = searchTerm || 'sách';
 
             const response = await axios.post(endpoint, { query: termToSearch });
 
             let resultBooks = response.data;
 
-            // CLIENT-SIDE FILTERING (Tạm thời, vì backend chưa có logic filter)
-            if (filters.maxPrice) {
+            // CLIENT-SIDE FILTERING (Updated for Double Slider)
+            if (filters.maxPrice !== undefined) {
                 resultBooks = resultBooks.filter(b => (b.price || 0) <= filters.maxPrice);
+            }
+            if (filters.minPrice !== undefined) {
+                resultBooks = resultBooks.filter(b => (b.price || 0) >= filters.minPrice);
             }
             if (filters.minPages) {
                 resultBooks = resultBooks.filter(b => (b.number_of_pages || 0) >= filters.minPages);
             }
             if (filters.publisher) {
-                // So sánh tương đối hoặc chính xác tùy dữ liệu
                 resultBooks = resultBooks.filter(b => b.publisher && b.publisher.includes(filters.publisher));
             }
 
             setBooks(resultBooks);
+            setCurrentPage(1); // Reset to page 1 for new results
         } catch (error) {
             console.error("Error fetching books:", error);
             setBooks([]);
@@ -52,10 +51,9 @@ const BookStore = () => {
         }
     };
 
-    // Initial load
     useEffect(() => {
         fetchBooks(query);
-    }, []); // Run once on mount
+    }, []);
 
     const handleSearchSubmit = (e) => {
         e.preventDefault();
@@ -63,16 +61,28 @@ const BookStore = () => {
     };
 
     const handleFilterChange = (newFilters) => {
-        setFilters(prev => {
-            const updated = { ...prev, ...newFilters };
-            // Có thể tự động fetch lại khi filter đổi
-            // Nhưng cần cẩn thận với infinite loop nếu fetchBooks phụ thuộc filters
-            // Ở đây ta sẽ gọi fetchBooks thủ công hoặc qua useEffect dependency
-            return updated;
-        });
+        setFilters(prev => ({ ...prev, ...newFilters }));
     };
 
-    // Trigger re-fetch/re-filter when filters change
+    // Trigger re-fetch/re-filter when filters or query changes
+    // Note: In a real app with server-side filtering, we would pass params to API.
+    // Since we do client-side filtering on the search result here, we might just re-apply filters 
+    // to the *existing* search result if we stored the 'raw' results separately. 
+    // But to keep it simple and consistent with previous logic, we re-fetch (or re-process) data.
+    // Optimization: Store rawResults separate from activeBooks. 
+    // For now, re-fetching search is okay as local mock/demo.
+
+    // BETTER approach for this demo: only re-fetch if Query changes. 
+    // If Filter changes, just re-filter the *current* raw results. 
+    // But since I don't want to re-write the whole state management right now, 
+    // I will stick to the existing pattern but just ensure 'fetchBooks' uses the latest 'filters'.
+    // Actually, 'fetchBooks' uses 'filters' state which is a closure trap in the current version 
+    // if not careful, but 'filters' is read from strict state if passed or accessed via ref. 
+    // Wait, 'fetchBooks' captures 'filters' from closure at definition time? 
+    // No, it's defined inside component, so it captures current render scope. 
+    // useEffect on [filters] creates a new fetchBooks? No.
+    // Let's rely on the useEffect dependency array.
+
     useEffect(() => {
         if (books.length > 0 || query) {
             fetchBooks(query);
@@ -106,15 +116,39 @@ const BookStore = () => {
                     {loading ? (
                         <div className="loading-spinner">Đang tải dữ liệu...</div>
                     ) : (
-                        <BookItems
-                            books={books}
-                            onSelectBook={setSelectedBook}
-                        />
+                        <>
+                            <BookItems
+                                books={books.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)}
+                                onSelectBook={setSelectedBook}
+                            />
+
+                            {/* Pagination Controls */}
+                            {books.length > ITEMS_PER_PAGE && (
+                                <div className="pagination">
+                                    <button
+                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                        disabled={currentPage === 1}
+                                    >
+                                        &laquo; Trước
+                                    </button>
+
+                                    <span className="page-info">
+                                        Trang {currentPage} / {Math.ceil(books.length / ITEMS_PER_PAGE)}
+                                    </span>
+
+                                    <button
+                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(books.length / ITEMS_PER_PAGE)))}
+                                        disabled={currentPage === Math.ceil(books.length / ITEMS_PER_PAGE)}
+                                    >
+                                        Sau &raquo;
+                                    </button>
+                                </div>
+                            )}
+                        </>
                     )}
                 </main>
             </div>
 
-            {/* Modal */}
             <BookModal
                 book={selectedBook}
                 onClose={() => setSelectedBook(null)}
