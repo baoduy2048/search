@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  # Cấu hình Elasticsearch
+  elasticsearch:
+    build: . # Sử dụng Dockerfile ở bước 1 để build image có plugin
+    container_name: elasticsearch_vntest
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false # Tắt bảo mật để bạn dễ dàng test API lúc đầu
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - 9200:9200 # Cổng để bạn gọi REST Client
+    networks:
+      - search-network
+
+  # Cấu hình MongoDB
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb_vntest
+    ports:
+      - 27017:27017 # Cổng để kết nối MongoDB Compass
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - search-network
+
+networks:
+  search-network:
+    driver: bridge
+
+volumes:
+  mongo_data:
