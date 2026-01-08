@@ -66,12 +66,12 @@ function Home() {
             <div style={{ width: '60%', paddingLeft: '210px' }} className="results">
                 {results.map((book) => (
                     <div key={book.id} className="book-card">
-                        <h3>{book.name}</h3>
-                        <p dangerouslySetInnerHTML={{ __html: book.highlight ? book.highlight.join(' ') : book.abstract }} />
+                        <h3>{book.title}</h3>
+                        <p dangerouslySetInnerHTML={{ __html: book.highlight ? book.highlight.join(' ') : book.description }} />
                     </div>
                 ))}
             </div>
-        </div> 
+        </div>
     );
 }
 

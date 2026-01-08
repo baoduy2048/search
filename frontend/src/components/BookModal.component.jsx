@@ -22,7 +22,10 @@ const BookModal = ({ book, onClose }) => {
                         <div className="modal-meta">
                             <p><strong>Tác giả:</strong> {book.author || 'Đang cập nhật'}</p>
                             <p><strong>Nhà xuất bản:</strong> {book.publisher || 'Đang cập nhật'}</p>
-                            <p><strong>Số trang:</strong> {book.number_of_pages || 'N/A'}</p>
+                            <p><strong>Năm xuất bản:</strong> {book.publish_year || 'N/A'}</p>
+                            <p><strong>Số trang:</strong> {book.page_count || 'N/A'}</p>
+                            <p><strong>Kích thước:</strong> {book.dimensions || 'N/A'}</p>
+                            <p><strong>Trọng lượng:</strong> {book.weight ? `${book.weight}g` : 'N/A'}</p>
                         </div>
 
                         <div className="modal-price-section">
@@ -44,7 +47,12 @@ const BookModal = ({ book, onClose }) => {
                         </div>
 
                         <div className="modal-actions">
-                            <button className="btn-buy">Chọn mua</button>
+                            <button className="btn-buy" onClick={() => alert('Chức năng thêm vào giỏ hàng đang phát triển!')}>Chọn mua</button>
+                            {book.product_url && (
+                                <a href={book.product_url} target="_blank" rel="noopener noreferrer" className="btn-view-more" style={{ marginLeft: '10px', textDecoration: 'none', color: '#007bff' }}>
+                                    
+                                </a>
+                            )}
                         </div>
                     </div>
                 </div>

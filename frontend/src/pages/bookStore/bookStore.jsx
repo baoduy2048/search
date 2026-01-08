@@ -3,6 +3,7 @@ import axios from 'axios';
 import Filter from '../../components/Filter.component';
 import BookItems from '../../components/BookItems.component';
 import BookModal from '../../components/BookModal.component';
+import Pagination from '../../components/Pagination.component';
 import './bookStore.css';
 
 const BookStore = () => {
@@ -35,7 +36,10 @@ const BookStore = () => {
                 resultBooks = resultBooks.filter(b => (b.price || 0) >= filters.minPrice);
             }
             if (filters.minPages) {
-                resultBooks = resultBooks.filter(b => (b.number_of_pages || 0) >= filters.minPages);
+                resultBooks = resultBooks.filter(b => {
+                    const pages = parseInt(b.page_count);
+                    return !isNaN(pages) && pages >= parseInt(filters.minPages);
+                });
             }
             if (filters.publisher) {
                 resultBooks = resultBooks.filter(b => b.publisher && b.publisher.includes(filters.publisher));
@@ -64,31 +68,16 @@ const BookStore = () => {
         setFilters(prev => ({ ...prev, ...newFilters }));
     };
 
-    // Trigger re-fetch/re-filter when filters or query changes
-    // Note: In a real app with server-side filtering, we would pass params to API.
-    // Since we do client-side filtering on the search result here, we might just re-apply filters 
-    // to the *existing* search result if we stored the 'raw' results separately. 
-    // But to keep it simple and consistent with previous logic, we re-fetch (or re-process) data.
-    // Optimization: Store rawResults separate from activeBooks. 
-    // For now, re-fetching search is okay as local mock/demo.
-
-    // BETTER approach for this demo: only re-fetch if Query changes. 
-    // If Filter changes, just re-filter the *current* raw results. 
-    // But since I don't want to re-write the whole state management right now, 
-    // I will stick to the existing pattern but just ensure 'fetchBooks' uses the latest 'filters'.
-    // Actually, 'fetchBooks' uses 'filters' state which is a closure trap in the current version 
-    // if not careful, but 'filters' is read from strict state if passed or accessed via ref. 
-    // Wait, 'fetchBooks' captures 'filters' from closure at definition time? 
-    // No, it's defined inside component, so it captures current render scope. 
-    // useEffect on [filters] creates a new fetchBooks? No.
-    // Let's rely on the useEffect dependency array.
-
     useEffect(() => {
         if (books.length > 0 || query) {
             fetchBooks(query);
         }
     }, [filters]);
 
+    // Calculate current items for pagination
+    const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
+    const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
+    const currentBooks = books.slice(indexOfFirstItem, indexOfLastItem);
 
     return (
         <div className="bookstore-page">
@@ -118,31 +107,18 @@ const BookStore = () => {
                     ) : (
                         <>
                             <BookItems
-                                books={books.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)}
+                                books={currentBooks}
                                 onSelectBook={setSelectedBook}
                             />
 
                             {/* Pagination Controls */}
                             {books.length > ITEMS_PER_PAGE && (
-                                <div className="pagination">
-                                    <button
-                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                        disabled={currentPage === 1}
-                                    >
-                                        &laquo; Trước
-                                    </button>
-
-                                    <span className="page-info">
-                                        Trang {currentPage} / {Math.ceil(books.length / ITEMS_PER_PAGE)}
-                                    </span>
-
-                                    <button
-                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(books.length / ITEMS_PER_PAGE)))}
-                                        disabled={currentPage === Math.ceil(books.length / ITEMS_PER_PAGE)}
-                                    >
-                                        Sau &raquo;
-                                    </button>
-                                </div>
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalItems={books.length}
+                                    itemsPerPage={ITEMS_PER_PAGE}
+                                    onPageChange={setCurrentPage}
+                                />
                             )}
                         </>
                     )}

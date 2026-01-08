@@ -8,7 +8,7 @@ app.use(express.json());
 
 // Khởi tạo kết nối tới Elasticsearch (Docker)
 const client = new Client({
-  node: 'http://localhost:9200', 
+  node: 'http://localhost:9200',
 });
 
 // API Route tìm kiếm sách
@@ -24,19 +24,20 @@ app.post('/api/search', async (req, res) => {
     const result = await client.search({
       index: 'book_index', // Tên index bạn đã tạo
       body: {
+        size: 1000,
         query: {
           match: {
-            abstract: {
+            description: {
               query: query,
               minimum_should_match: "30%" // Linh hoạt cho câu dài
             }
-          }
+          },
         },
         highlight: {
           pre_tags: ["<b class='highlight'>"], // Gán class để CSS ở Frontend
           post_tags: ["</b>"],
           fields: {
-            abstract: {}
+            description: {}
           }
         }
       }
@@ -47,7 +48,7 @@ app.post('/api/search', async (req, res) => {
       id: hit._id,
       score: hit._score,
       ...hit._source,
-      highlight: hit.highlight ? hit.highlight.abstract : null
+      highlight: hit.highlight ? hit.highlight.description : null
     }));
 
     res.json(books);
@@ -60,7 +61,7 @@ app.post('/api/search', async (req, res) => {
 const PORT = 5000;
 app.get('/api/suggest', async (req, res) => {
   const { q } = req.query; // Lấy 'nhà' từ suggest?q=nhà
-  
+
   if (!q) return res.json([]);
 
   try {
@@ -71,16 +72,16 @@ app.get('/api/suggest', async (req, res) => {
         query: {
           // match_phrase_prefix giúp gợi ý cụm từ bắt đầu bằng chữ 'nhà'
           match_phrase_prefix: {
-            name: {
+            title: {
               query: q
             }
           }
         },
-        _source: ["name"]
+        _source: ["title"]
       }
     });
 
-    const suggestions = result.hits.hits.map(hit => hit._source.name);
+    const suggestions = result.hits.hits.map(hit => hit._source.title);
     res.json(suggestions);
   } catch (error) {
     console.error("Lỗi ES:", error);
