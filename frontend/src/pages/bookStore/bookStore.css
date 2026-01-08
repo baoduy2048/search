@@ -1,0 +1,93 @@
+.bookstore-page {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f4f4f4;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.bookstore-header {
+    background-color: #fff;
+    padding: 20px 0;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+}
+
+.bookstore-header h1 {
+    margin: 0 0 20px;
+    font-size: 28px;
+    color: #333;
+}
+
+.search-bar-container form {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.search-bar-container input {
+    flex: 1;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    outline: none;
+}
+
+.search-bar-container input:focus {
+    border-color: #0d8bf2;
+}
+
+.search-bar-container button {
+    padding: 10px 25px;
+    background-color: #0d8bf2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.search-bar-container button:hover {
+    background-color: #0072d1;
+}
+
+.bookstore-body {
+    display: flex;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 0 20px 40px;
+    gap: 30px;
+}
+
+.bookstore-sidebar {
+    width: 250px;
+    flex-shrink: 0;
+}
+
+.bookstore-content {
+    flex: 1;
+}
+
+.loading-spinner {
+    text-align: center;
+    padding: 50px;
+    font-size: 18px;
+    color: #666;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .bookstore-body {
+        flex-direction: column;
+    }
+
+    .bookstore-sidebar {
+        width: 100%;
+    }
+}
