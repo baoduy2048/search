@@ -16,8 +16,8 @@ const Filter = ({ onFilterChange }) => {
     useEffect(() => {
         const fetchPublishers = async () => {
             try {
-                const res = await axios.get('http://localhost:5000/api/publishers');
-                setPublishers(res.data);
+                const res = await axios.get('http://localhost:5000/api/publishers/top');
+                setPublishers(res.data.map(p => p.key));
             } catch (error) {
                 console.error("Failed to fetch publishers:", error);
                 setPublishers(["Nhà Xuất Bản Trẻ", "NXB Kim Đồng", "NXB Văn Học", "NXB Giáo Dục", "NXB Lao Động"]);

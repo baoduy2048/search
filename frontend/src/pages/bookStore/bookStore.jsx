@@ -22,13 +22,17 @@ const BookStore = () => {
         setLoading(true);
         try {
             const endpoint = 'http://localhost:5000/api/search';
-            const termToSearch = searchTerm || 'sách';
 
-            const response = await axios.post(endpoint, { query: termToSearch });
+            const payload = {
+                query: searchTerm,
+                publisher: filters.publisher
+            };
+
+            const response = await axios.post(endpoint, payload);
 
             let resultBooks = response.data;
 
-            // CLIENT-SIDE FILTERING (Updated for Double Slider)
+            // CLIENT-SIDE FILTERING
             if (filters.maxPrice !== undefined) {
                 resultBooks = resultBooks.filter(b => (b.price || 0) <= filters.maxPrice);
             }
@@ -41,9 +45,7 @@ const BookStore = () => {
                     return !isNaN(pages) && pages >= parseInt(filters.minPages);
                 });
             }
-            if (filters.publisher) {
-                resultBooks = resultBooks.filter(b => b.publisher && b.publisher.includes(filters.publisher));
-            }
+            // Removed client-side publisher filter as it is now handled by backend
 
             setBooks(resultBooks);
             setCurrentPage(1); // Reset to page 1 for new results
