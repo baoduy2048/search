@@ -62,7 +62,7 @@ async function run() {
         });
 
         console.log("Reading data file data-format.json...");
-        const dataPath = path.join(__dirname, '../data/data-format.jsonl');
+        const dataPath = path.join(__dirname, '../data/data-format.json');
 
         // Read file
         const fileContent = fs.readFileSync(dataPath, 'utf8');
