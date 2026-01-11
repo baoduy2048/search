@@ -121,5 +121,5 @@ app.get("/hmm", async (req, res) => {
   res.send("Server đã sẵn sàng và đang chạy trên 0.0.0.0!");
 });
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server đang chạy tại http://localhost:${PORT}`);
+  console.log(`Server đang chạy tại cổng ${PORT}`);
 });
