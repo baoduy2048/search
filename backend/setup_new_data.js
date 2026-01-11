@@ -19,11 +19,35 @@ async function run() {
             body: {
                 settings: {
                     analysis: {
+                        filter: {
+                            my_vi_stop: {
+                                type: "stop",
+                                stopwords: [
+                                    "là", "và", "của", "với", "cho", "rằng", "thì", "mà", "tại", "trong", 
+                                    "ngoài", "giữa", "ở", "từ", "đến", "hay", "hoặc", "này", "kia", "đó", 
+                                    "nọ", "đấy", "đây", "thế", "vậy", "những", "các", "mỗi", "mọi", "từng", 
+                                    "vài", "sự", "việc", "đã", "đang", "sẽ", "vừa", "mới", "xong", "rồi", 
+                                    "cũng", "vẫn", "cứ", "còn", "không", "chẳng", "chả", "chưa", "đừng", 
+                                    "chớ", "rất", "quá", "lắm", "hơi", "cực", "kỳ", "à", "ơi", "nhỉ", 
+                                    "nhé", "sao", "nào", "gì", "đâu", "cơ", "hả", "hử"
+                                ]
+                            },
+                            my_shingle_filter: { // tạo thêm các chỉ mục là từ ghép 2 hoặc 3 từ cạnh nhau
+                                type: "shingle",
+                                min_shingle_size: 2,
+                                max_shingle_size: 3,
+                                output_unigrams: true // Giữ lại cả từ đơn lẻ để tìm kiếm vẫn linh hoạt
+                            }
+                        },
                         analyzer: {
                             vi_mixed_analyzer: {
                                 tokenizer: "icu_tokenizer",
-                                filter: ["lowercase", "icu_folding"]
-                            }
+                                filter: ["lowercase", "my_vi_stop", "icu_folding", "my_shingle_filter"]
+                            },
+                            vi_title_analyzer: {
+                                tokenizer: "icu_tokenizer",
+                                filter: ["lowercase", "icu_folding", "my_shingle_filter"]
+                            },
                         }
                     },
                     index: {
@@ -38,11 +62,11 @@ async function run() {
                     properties: {
                         title: {
                             type: "text",
-                            analyzer: "vi_mixed_analyzer",
+                            analyzer: "vi_title_analyzer",
                             fields: {
                                 suggest: {
                                     type: "text",
-                                    analyzer: "vi_mixed_analyzer"
+                                    analyzer: "vi_title_analyzer"
                                 }
                             }
                         },
@@ -51,18 +75,27 @@ async function run() {
                             analyzer: "vi_mixed_analyzer",
                             similarity: "lm_scoring"
                         },
-                        author: { type: "text" },
+                        author: { 
+                            type: "text" ,
+                            analyzer: "vi_title_analyzer",
+                        },
                         publisher: { type: "keyword" },
                         price: { type: "text" }, // Price in JSON is string "27000"
                         product_url: { type: "keyword" },
-                        image_url: { type: "keyword" }
+                        image_url: { type: "keyword" },
+                        publisher: {type: "keyword"},
+                        publish_year: {type: "keyword"},
+                        page_count: {type: "keyword"},
+                        dimensions: {type: "keyword"},
+                        weight: {type: "keyword"},
+                        category: {type: "keyword"}
                     }
                 }
             }
         });
 
         console.log("Reading data file data-format.json...");
-        const dataPath = path.join(__dirname, '../data/data-format.json');
+        const dataPath = path.join(__dirname, '../data/book-info.jsonl');
 
         // Read file
         const fileContent = fs.readFileSync(dataPath, 'utf8');

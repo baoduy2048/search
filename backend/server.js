@@ -1,6 +1,6 @@
-const express = require('express');
-const { Client } = require('@elastic/elasticsearch');
-const cors = require('cors');
+const express = require("express");
+const { Client } = require("@elastic/elasticsearch");
+const cors = require("cors");
 
 const app = express();
 app.use(cors());
@@ -8,65 +8,76 @@ app.use(express.json());
 
 // Khởi tạo kết nối tới Elasticsearch (Docker)
 const client = new Client({
-  node: 'http://localhost:9200',
+  node: "http://localhost:9200",
 });
 
 // API Route tìm kiếm sách
-app.post('/api/search', async (req, res) => {
-  const { query, publisher } = req.body; // Lấy từ khóa và publisher từ Frontend
+app.post("/api/search", async (req, res) => {
+  const { query } = req.body; // Lấy từ khóa từ Frontend
+
+  if (!query) {
+    return res.status(400).json({ message: "Vui lòng nhập từ khóa tìm kiếm" });
+  }
 
   try {
-    const esQuery = {
-      bool: {
-        must: [],
-        filter: []
-      }
-    };
-
-    // 1. Full-text search (Must)
-    if (query) {
-      esQuery.bool.must.push({
-        match: {
-          description: {
-            query: query,
-            minimum_should_match: "30%"
-          }
-        }
-      });
-    } else {
-      esQuery.bool.must.push({ match_all: {} });
-    }
-
-    // 2. Filter by Publisher (Filter -> Exact Match)
-    if (publisher) {
-      esQuery.bool.filter.push({
-        term: {
-          publisher: publisher // Fields in ES 'keyword' type require exact match
-        }
-      });
-    }
-
     const result = await client.search({
-      index: 'book_index',
+      index: "book_index",
       body: {
-        size: 1000,
-        query: esQuery,
+        from: 0,
+        size: 20,
+        query: {
+          bool: {
+            should: [
+              // 1. Trường hợp khớp HOÀN HẢO (Bắt buộc đủ từ, ưu tiên cao nhất)
+              {
+                multi_match: {
+                  query: query,
+                  fields: ["title^5", "author^3"],
+                  type: "phrase", // Tìm đúng thứ tự cụm từ
+                  boost: 10,
+                },
+              },
+              // 2. Trường hợp khớp phần lớn (Linh hoạt cho câu dài)
+              {
+                multi_match: {
+                  query: query,
+                  fields: ["title^3", "author^2", "description"],
+                  type: "best_fields",
+                  operator: "and",
+                  minimum_should_match: "70%", // Ít nhất 70% số từ phải khớp
+                  fuzziness: "0", // Hỗ trợ gõ sai chính tả
+                },
+              },
+              // 3. Trường hợp tìm kiếm rộng (Cho phép kết quả gần đúng)
+              {
+                multi_match: {
+                  query: query,
+                  fields: ["title", "author", "description"],
+                  operator: "or",
+                },
+              },
+            ],
+          },
+        },
+        
         highlight: {
           pre_tags: ["<b class='highlight'>"],
           post_tags: ["</b>"],
           fields: {
+            title: {},
+            author: {},
             description: {}
           }
         }
-      }
+      },
     });
 
     // Trả về danh sách kết quả (hits)
-    const books = result.hits.hits.map(hit => ({
+    const books = result.hits.hits.map((hit) => ({
       id: hit._id,
       score: hit._score,
       ...hit._source,
-      highlight: hit.highlight ? hit.highlight.description : null
+      highlight: hit.highlight || null,
     }));
 
     res.json(books);
@@ -77,62 +88,38 @@ app.post('/api/search', async (req, res) => {
 });
 
 const PORT = 5000;
-app.get('/api/suggest', async (req, res) => {
+app.get("/api/suggest", async (req, res) => {
   const { q } = req.query; // Lấy 'nhà' từ suggest?q=nhà
 
   if (!q) return res.json([]);
 
   try {
     const result = await client.search({
-      index: 'book_index',
+      index: "book_index",
       body: {
         size: 5,
         query: {
           // match_phrase_prefix giúp gợi ý cụm từ bắt đầu bằng chữ 'nhà'
           match_phrase_prefix: {
             title: {
-              query: q
-            }
-          }
+              query: q,
+            },
+          },
         },
-        _source: ["title"]
-      }
+        _source: ["title"],
+      },
     });
 
-    const suggestions = result.hits.hits.map(hit => hit._source.title);
+    const suggestions = result.hits.hits.map((hit) => hit._source.title);
     res.json(suggestions);
   } catch (error) {
     console.error("Lỗi ES:", error);
     res.json([]);
   }
 });
-app.get('/api/publishers/top', async (req, res) => {
-  try {
-    const result = await client.search({
-      index: 'book_index',
-      body: {
-        size: 0, // Chỉ lấy aggregation, không lấy documents
-        aggs: {
-          top_publishers: {
-            terms: {
-              field: "publisher", // Trường keyword
-              size: 5 // Top 5
-            }
-          }
-        }
-      }
-    });
-
-    // Trả về mảng các bucket
-    // Cấu trúc: [{ key: "NXB Trẻ", doc_count: 100 }, ...]
-    const publishers = result.aggregations.top_publishers.buckets;
-    res.json(publishers);
-  } catch (error) {
-    console.error("Lỗi aggregation:", error);
-    res.status(500).json({ error: "Lỗi hệ thống khi lấy thống kê" });
-  }
+app.get("/hmm", async (req, res) => {
+  res.send("Server đã sẵn sàng và đang chạy trên 0.0.0.0!");
 });
-
-app.listen(PORT, () => {
-  console.log(`Server đang chạy tại http://localhost:${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server đang chạy tại cổng ${PORT}`);
 });

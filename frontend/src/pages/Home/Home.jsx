@@ -2,6 +2,7 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import './Home.css';
+const API_BASE_URL = 'http://172.20.10.13'
 
 function Home() {
     const [query, setQuery] = useState('');
@@ -13,7 +14,7 @@ function Home() {
         const fetchSuggestions = async () => {
             if (query.length > 1) { // Chỉ gợi ý khi gõ từ 2 ký tự trở lên
                 try {
-                    const res = await axios.get(`http://localhost:5000/api/suggest?q=${query}`);
+                    const res = await axios.get(API_BASE_URL + `:5000/api/suggest?q=${query}`);
                     setSuggestions(res.data);
                 } catch (err) { console.error(err); }
             } else {
@@ -30,7 +31,8 @@ function Home() {
         const searchTerm = customQuery || query;
         setSuggestions([]); // Ẩn gợi ý sau khi tìm kiếm
         try {
-            const response = await axios.post('http://localhost:5000/api/search', { query: searchTerm });
+            const response = await axios.post(API_BASE_URL + ':5000/api/search', { query: searchTerm });
+            console.log(response)
             setResults(response.data);
         } catch (error) { console.error(error); }
     };
@@ -62,12 +64,14 @@ function Home() {
                 )}
             </div>
 
-            {/* Phần hiển thị Results giữ nguyên như cũ */}
+            {/* Phần hiển thị Kết quả */}
             <div style={{ width: '60%', paddingLeft: '210px' }} className="results">
                 {results.map((book) => (
                     <div key={book.id} className="book-card">
-                        <h3>{book.title}</h3>
-                        <p dangerouslySetInnerHTML={{ __html: book.highlight ? book.highlight.join(' ') : book.description }} />
+                        <h3 dangerouslySetInnerHTML={{ __html: book.highlight.title ? `${book.highlight.title}` : book.title }}></h3>
+                        <p dangerouslySetInnerHTML={{ __html: book.highlight.author ? `Tác giả: ${book.highlight.author}` : `Tác giả: ${book.author}` }}></p>
+                        <p dangerouslySetInnerHTML={{ __html: book.highlight.description ? `...${book.highlight.description.join('...')}...` : book.description }} />
+                        <a href={book.product_url}>Chi tiết</a>
                     </div>
                 ))}
             </div>
