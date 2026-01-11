@@ -25,7 +25,9 @@ const BookStore = () => {
 
             const payload = {
                 query: searchTerm,
-                publisher: filters.publisher
+                publisher: filters.publisher,
+                category: filters.category,
+                prioritizeAuthor: true
             };
 
             const response = await axios.post(endpoint, payload);

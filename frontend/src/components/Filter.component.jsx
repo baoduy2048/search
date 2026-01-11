@@ -4,7 +4,9 @@ import './Filter.component.css';
 
 const Filter = ({ onFilterChange }) => {
     const [publishers, setPublishers] = useState([]);
+    const [categories, setCategories] = useState([]);
     const [selectedPublisher, setSelectedPublisher] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('');
     const [minPages, setMinPages] = useState('');
 
     // Price Range State
@@ -14,22 +16,28 @@ const Filter = ({ onFilterChange }) => {
     const [maxPrice, setMaxPrice] = useState(MAX_PRICE_LIMIT);
 
     useEffect(() => {
-        const fetchPublishers = async () => {
+        const fetchData = async () => {
             try {
-                const res = await axios.get('http://localhost:5000/api/publishers/top');
-                setPublishers(res.data.map(p => p.key));
+                // Fetch Publishers
+                const pubRes = await axios.get('http://localhost:5000/api/publishers/top');
+                setPublishers(pubRes.data.map(p => p.key));
+
+                // Fetch Categories
+                const catRes = await axios.get('http://localhost:5000/api/categories');
+                setCategories(catRes.data.map(c => c.key));
             } catch (error) {
-                console.error("Failed to fetch publishers:", error);
+                console.error("Failed to fetch filter data:", error);
                 setPublishers(["Nhà Xuất Bản Trẻ", "NXB Kim Đồng", "NXB Văn Học", "NXB Giáo Dục", "NXB Lao Động"]);
             }
         };
-        fetchPublishers();
+        fetchData();
     }, []);
 
     const notifyChange = (updates) => {
         if (onFilterChange) {
             onFilterChange({
                 publisher: selectedPublisher,
+                category: selectedCategory,
                 minPages: minPages,
                 minPrice: minPrice,
                 maxPrice: maxPrice,
@@ -42,6 +50,12 @@ const Filter = ({ onFilterChange }) => {
         const val = e.target.value;
         setSelectedPublisher(val);
         notifyChange({ publisher: val });
+    };
+
+    const handleCategoryChange = (e) => {
+        const val = e.target.value;
+        setSelectedCategory(val);
+        notifyChange({ category: val });
     };
 
     const handleMinPagesChange = (e) => {
@@ -83,6 +97,17 @@ const Filter = ({ onFilterChange }) => {
                     <option value="">-- Tất cả --</option>
                     {publishers.map((pub, index) => (
                         <option key={index} value={pub}>{pub}</option>
+                    ))}
+                </select>
+            </div>
+
+            {/* 2. Thể loại */}
+            <div className="filter-group">
+                <label htmlFor="category-select">Thể loại</label>
+                <select id="category-select" value={selectedCategory} onChange={handleCategoryChange}>
+                    <option value="">-- Tất cả --</option>
+                    {categories.map((cat, index) => (
+                        <option key={index} value={cat}>{cat}</option>
                     ))}
                 </select>
             </div>

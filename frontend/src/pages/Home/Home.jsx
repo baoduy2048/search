@@ -1,13 +1,18 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Home.css';
-const API_BASE_URL = 'http://172.20.10.13'
+const API_BASE_URL = 'http://localhost'
+
+import BookModal from '../../components/BookModal.component';
 
 function Home() {
+    const navigate = useNavigate();
     const [query, setQuery] = useState('');
     const [results, setResults] = useState([]);
     const [suggestions, setSuggestions] = useState([]);
+    const [selectedBook, setSelectedBook] = useState(null); // State cho Modal
 
     // Tự động gọi API gợi ý khi người dùng gõ phím
     useEffect(() => {
@@ -39,6 +44,7 @@ function Home() {
 
     return (
         <div className="Home">
+
             <h1 style={{ paddingLeft: '500px' }} >📚 Book Search Engine</h1>
             <div className="search-container">
                 <form onSubmit={handleSearch}>
@@ -49,7 +55,8 @@ function Home() {
                         placeholder="Nhập tên sách hoặc mô tả..."
                         autoComplete="off"
                     />
-                    <button type="submit">Tìm kiếm</button>
+                    <button type="submit">Tìm Kiếm</button>
+                    <button type="button" onClick={() => navigate('/bookstore')}>Nhà Sách</button>
                 </form>
 
                 {/* Danh sách gợi ý */}
@@ -71,10 +78,26 @@ function Home() {
                         <h3 dangerouslySetInnerHTML={{ __html: book.highlight.title ? `${book.highlight.title}` : book.title }}></h3>
                         <p dangerouslySetInnerHTML={{ __html: book.highlight.author ? `Tác giả: ${book.highlight.author}` : `Tác giả: ${book.author}` }}></p>
                         <p dangerouslySetInnerHTML={{ __html: book.highlight.description ? `...${book.highlight.description.join('...')}...` : book.description }} />
-                        <a href={book.product_url}>Chi tiết</a>
+                        <button
+                            className="detail-btn"
+                            style={{
+                                padding: '8px 16px',
+                                backgroundColor: '#007bff',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                marginTop: '10px'
+                            }}
+                            onClick={() => setSelectedBook(book)}
+                        >
+                            Chi tiết
+                        </button>
                     </div>
                 ))}
             </div>
+
+            <BookModal book={selectedBook} onClose={() => setSelectedBook(null)} />
         </div>
     );
 }

@@ -21,6 +21,7 @@ const BookModal = ({ book, onClose }) => {
 
                         <div className="modal-meta">
                             <p><strong>Tác giả:</strong> {book.author || 'Đang cập nhật'}</p>
+                            <p><strong>Thể loại:</strong> {book.category || 'Đang cập nhật'}</p>
                             <p><strong>Nhà xuất bản:</strong> {book.publisher || 'Đang cập nhật'}</p>
                             <p><strong>Năm xuất bản:</strong> {book.publish_year || 'N/A'}</p>
                             <p><strong>Số trang:</strong> {book.page_count || 'N/A'}</p>

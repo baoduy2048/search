@@ -23,12 +23,12 @@ async function run() {
                             my_vi_stop: {
                                 type: "stop",
                                 stopwords: [
-                                    "là", "và", "của", "với", "cho", "rằng", "thì", "mà", "tại", "trong", 
-                                    "ngoài", "giữa", "ở", "từ", "đến", "hay", "hoặc", "này", "kia", "đó", 
-                                    "nọ", "đấy", "đây", "thế", "vậy", "những", "các", "mỗi", "mọi", "từng", 
-                                    "vài", "sự", "việc", "đã", "đang", "sẽ", "vừa", "mới", "xong", "rồi", 
-                                    "cũng", "vẫn", "cứ", "còn", "không", "chẳng", "chả", "chưa", "đừng", 
-                                    "chớ", "rất", "quá", "lắm", "hơi", "cực", "kỳ", "à", "ơi", "nhỉ", 
+                                    "là", "và", "của", "với", "cho", "rằng", "thì", "mà", "tại", "trong",
+                                    "ngoài", "giữa", "ở", "từ", "đến", "hay", "hoặc", "này", "kia", "đó",
+                                    "nọ", "đấy", "đây", "thế", "vậy", "những", "các", "mỗi", "mọi", "từng",
+                                    "vài", "sự", "việc", "đã", "đang", "sẽ", "vừa", "mới", "xong", "rồi",
+                                    "cũng", "vẫn", "cứ", "còn", "không", "chẳng", "chả", "chưa", "đừng",
+                                    "chớ", "rất", "quá", "lắm", "hơi", "cực", "kỳ", "à", "ơi", "nhỉ",
                                     "nhé", "sao", "nào", "gì", "đâu", "cơ", "hả", "hử"
                                 ]
                             },
@@ -75,20 +75,20 @@ async function run() {
                             analyzer: "vi_mixed_analyzer",
                             similarity: "lm_scoring"
                         },
-                        author: { 
-                            type: "text" ,
+                        author: {
+                            type: "text",
                             analyzer: "vi_title_analyzer",
                         },
                         publisher: { type: "keyword" },
                         price: { type: "text" }, // Price in JSON is string "27000"
                         product_url: { type: "keyword" },
                         image_url: { type: "keyword" },
-                        publisher: {type: "keyword"},
-                        publish_year: {type: "keyword"},
-                        page_count: {type: "keyword"},
-                        dimensions: {type: "keyword"},
-                        weight: {type: "keyword"},
-                        category: {type: "keyword"}
+                        publisher: { type: "keyword" },
+                        publish_year: { type: "keyword" },
+                        page_count: { type: "keyword" },
+                        dimensions: { type: "keyword" },
+                        weight: { type: "keyword" },
+                        category: { type: "keyword" }
                     }
                 }
             }
