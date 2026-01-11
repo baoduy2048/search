@@ -8,24 +8,29 @@ import time
 import re
 import json
 
-url = 'https://www.fahasa.com/sach-trong-nuoc.html'
+# Danh sách các quyển sách trong nước sắp xếp từ mới nhất đến cũ nhất
+url = 'https://www.fahasa.com/sach-trong-nuoc.html?order=created_at&limit=48&'
+id = 0
+newest_book_last_crawled = ''
+with open('newest_book_last_crawled.txt', 'w', encoding="utf-8") as y:
+    newest_book_last_crawled = y.readline()
 
-# Giả lập trình duyệt Chrome phiên bản 120
-response = requests.get(url, impersonate='chrome120')
-soup = BeautifulSoup(response.content, 'html.parser')
-category_list = soup.find('ol', id='children-categories').find_all('li')
-for category in tqdm(category_list):
-    category_url = category.a['href']
-    category_request = requests.get(category_url + '?order=num_orders&limit=48&p=1', impersonate='chrome120')
-    category_element = BeautifulSoup(category_request.content, 'html.parser')
-    book_elements = category_element.find('ul', id='products_grid').find_all('li')
+# duyệt từng trang để lấy url sách 
+for i in tqdm(range(50)):
+    # Giả lập trình duyệt Chrome phiên bản 120
+    response = requests.get(url + f'p={i}', impersonate='chrome120')
+    soup = BeautifulSoup(response.content, 'html.parser')
+    book_elements = soup.find('ul', id='products_grid').find_all('li')
+    # Duyệt từng quyển sách một
     for book in tqdm(book_elements):
         try: 
             book_url = book.find('a', class_='product-image')['href']
-            
-
-            if "seriesbook-index-series" in book_url:
+            # Không crawl nếu là một bộ sách
+            if "series" in book_url:
                 continue
+            # Nếu duyệt đến quyển sách mới nhất trong lần crawl trước thì sẽ dừng, không crawl nữa
+            if newest_book_last_crawled == book_url:
+                break
             
             book_title = book.find('a', class_='product-image')['title']
             book_request = requests.get(book_url, impersonate='chrome120')
@@ -51,8 +56,16 @@ for category in tqdm(category_list):
                 "dimensions": detail.get("Kích Thước Bao Bì",""),
                 "weight": detail.get("Trọng lượng (gr)", "")
             }
-            with open ('book-info.json', 'a', encoding="utf-8") as x:
-                json.dump(book_info, x, ensure_ascii=False, indent=10)
+            # Lưu lại quyển sách mới nhất trong lần crawl này 
+            if id == 0:
+                with open ('newest_book_last_crawled.txt', 'w', encoding="utf-8") as y:
+                    y.write(book_url)
+            
+            with open ('book-info.jsonl', 'a', encoding="utf-8") as x:
+                id += 1
+                x.write(f'{{"index": {{"_id": "{id}"}} }}' + '\n')
+                json_record = json.dumps(book_info, ensure_ascii=False)
+                x.write(json_record + "\n")
         except Exception as e:
             print(f"[Error] {book_url}\n{e}")
 

@@ -19,10 +19,22 @@ async function run() {
             body: {
                 settings: {
                     analysis: {
+                        filter: {
+                            my_vi_stop: {
+                                type: "stop",
+                                stopwords: ["là", "và", "của", "với", "cho", "rằng", "thì", "mà", "tại", "trong", "ngoài", "giữa", "ở", "từ", "đến", "hay", "hoặc", "này", "kia", "đó", "nọ", "đấy", "đây", "thế", "vậy", "tôi", "ta", "tớ", "mình", "chúng", "họ", "nó", "ông", "bà", "anh", "chị", "em", "người", "những", "các", "mỗi", "mọi", "từng", "vài", "một", "hai", "ba", "bốn", "năm", "cái", "chiếc", "con", "quả", "bộ", "quyển", "cuốn", "tờ", "sự", "việc", "đã", "đang", "sẽ", "vừa", "mới", "xong", "rồi", "cũng", "vẫn", "cứ", "còn", "không", "chẳng", "chả", "chưa", "đừng", "chớ", "rất", "quá", "lắm", "hơi", "cực", "kỳ", "à", "ơi", "nhỉ", "nhé", "sao", "nào", "gì", "đâu", "cơ", "hả", "hử"]
+                            },
+                            my_shingle_filter: { // tạo thêm các chỉ mục là từ ghép 2 hoặc 3 từ cạnh nhau
+                                type: "shingle",
+                                min_shingle_size: 2,
+                                max_shingle_size: 3,
+                                output_unigrams: true // Giữ lại cả từ đơn lẻ để tìm kiếm vẫn linh hoạt
+                            }
+                        },
                         analyzer: {
                             vi_mixed_analyzer: {
                                 tokenizer: "icu_tokenizer",
-                                filter: ["lowercase", "icu_folding"]
+                                filter: ["lowercase", "icu_folding", "my_vi_stop", "my_shingle_filter"]
                             }
                         }
                     },
@@ -62,7 +74,7 @@ async function run() {
         });
 
         console.log("Reading data file data-format.json...");
-        const dataPath = path.join(__dirname, '../data/data-format.jsonl');
+        const dataPath = path.join(__dirname, '../data/book-info.jsonl');
 
         // Read file
         const fileContent = fs.readFileSync(dataPath, 'utf8');
